@@ -1,0 +1,77 @@
+version: '2'
+services:
+  dbx:
+    image: mariadb:latest
+    restart: always
+    ports:
+      - "3306:3306"
+    volumes:
+      - mydata:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=db
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=heslo
+      - MYSQL_ROOT_PASSWORD=toor
+  db:
+      image: postgres:9.2
+      restart: always
+      environment:
+          POSTGRES_USER: root
+          POSTGRES_DB: db
+          POSTGRES_PASSWORD: heslo
+          PGDATA: /var/lib/postgresql/data
+      volumes:
+        - bugs_pgdata:/var/lib/postgresql/data
+      ports:
+        - "5432:5432"
+  web:
+    build: stack/.
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    links:
+      - dbx
+      - mail:smtp
+    volumes:
+      - ../:/var/www/html
+      - ./conf:/etc/apache2/sites-enabled
+  web7:
+    build: stack7/.
+    restart: always
+    ports:
+      - "800:80"
+      - "8000:8000"
+    links:
+      - dbx
+      - mail:smtp
+    volumes:
+      - ../:/var/www/html
+      - ./conf:/etc/apache2/sites-enabled
+  mail:
+    image: schickling/mailcatcher
+    restart: always
+    ports:
+      - "1080:1080"
+  nodejs:
+    image: eabay/nodejs
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../:/var/www/html
+  myadmin1:
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    ports:
+      - "8080:80"
+    links:
+      - dbx
+    volumes:
+      - sessions:/sessions
+    environment:
+      - PMA_HOST=dbxH
+
+volumes:
+    mydata:
+    bugs_pgdata:
+    sessions:

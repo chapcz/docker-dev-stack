@@ -1,0 +1,42 @@
+FROM php:7-apache
+
+ADD ssmtp.conf /etc/ssmtp/ssmtp.conf
+
+RUN apt-get update && apt-get install -y  \
+        libpq-dev \
+        libzip-dev \
+        libicu-dev \
+        libfreetype6-dev \
+        libjpeg62-turbo-dev \
+        libpng12-dev \
+        libwebp-dev \
+        libxml2-dev \
+        libldap2-dev \
+        ssmtp \
+    && docker-php-ext-install calendar \
+    && docker-php-ext-enable calendar \
+    && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ \
+        --with-jpeg-dir=/usr/include/ \
+        --with-png-dir=/usr/include/ \
+        --with-webp-dir=/usr/include/ \
+    && docker-php-ext-install -j$(nproc) gd \
+    && docker-php-ext-install ctype
+
+RUN apt-get install -y \
+    && docker-php-ext-install json \
+    && docker-php-ext-install intl \
+    && docker-php-ext-install pdo_mysql \
+    && docker-php-ext-install soap \
+    && a2enmod rewrite ext_filter vhost_alias ssl \
+    && docker-php-ext-install zip
+
+RUN curl -sS https://getcomposer.org/installer | php \
+    && mv composer.phar /usr/local/bin/composer
+
+RUN apt-get install -y  nodejs npm
+
+ADD abc.sh /usr/bin/abc
+ADD _.docker.key _.docker.cert /etc/apache2/ssl/
+RUN chmod 0777 /usr/bin/abc
+
+CMD ["apache2-foreground"]
